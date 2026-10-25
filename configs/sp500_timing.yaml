@@ -1,0 +1,22 @@
+# Long-history test of the timing ideas: S&P 500 total return index (dividends included,
+# data from 1988) with a lump sum, and cash earning the 13-week T-bill yield (^IRX).
+# A research benchmark: long history across several bear markets, not a tradable product.
+# Covers the 2000-02 and 2008 bear markets, the 2020 crash and the 2022 drawdown.
+start: 1990-01-01
+initial_capital: 10000
+costs: {bps: 5, fixed: 1.0}  # Trade Republic-like
+cash_rate: ^IRX
+
+strategies:
+  - label: buy_and_hold
+    strategy: buy_and_hold
+    params: {weights: {^SP500TR: 1.0}}
+  - label: vol_target
+    strategy: vol_target
+    params: {ticker: ^SP500TR, target_vol: 0.15}
+  - label: sma_10m
+    strategy: sma_trend
+    params: {ticker: ^SP500TR, months: 10}
+  - label: l1_trend
+    strategy: l1_trend
+    params: {ticker: ^SP500TR, lam_rel: 0.05}

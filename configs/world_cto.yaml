@@ -1,0 +1,25 @@
+# Hobby strategies on MSCI World in a CTO at Trade Republic (separate from the PEA DCA,
+# which is never touched by this repo). Benchmark: simply holding the same ETF.
+#
+# Trade Republic: 1 EUR fixed fee per order + ~5 bps spread. Uninvested cash earns interest:
+# cash_rate is a placeholder; set it to Trade Republic's current rate.
+# With a small budget the fixed fee matters: 1 EUR on a 1,000 EUR trade is 0.1%.
+# Note: no tax modelling yet (CTO gains are taxed at the flat tax when realized).
+start: 2011-01-01
+initial_capital: 1000
+costs: {bps: 5, fixed: 1.0}
+cash_rate: 0.02
+
+strategies:
+  - label: buy_and_hold
+    strategy: buy_and_hold
+    params: {weights: {IWDA.AS: 1.0}}
+  - label: vol_target
+    strategy: vol_target
+    params: {ticker: IWDA.AS, target_vol: 0.15}
+  - label: sma_10m
+    strategy: sma_trend
+    params: {ticker: IWDA.AS, months: 10}
+  - label: l1_trend
+    strategy: l1_trend
+    params: {ticker: IWDA.AS, lam_rel: 0.05}

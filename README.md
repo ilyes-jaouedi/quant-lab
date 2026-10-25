@@ -20,12 +20,47 @@ Code that gets reused in `research/` graduates into `src/fin/` with a test.
 | Module | Contents |
 |---|---|
 | `fin.data` | providers, Parquet cache, `MarketData` |
-| `fin.signals` | volatility forecasters: rolling, EWMA, out-of-sample GARCH(1,1) |
+| `fin.signals` | volatility forecasters (rolling, EWMA, out-of-sample GARCH(1,1)); L1 trend filter (banded primal-dual interior point) |
 | `fin.stats` | ACF, Ljung-Box, Lo-MacKinlay variance ratio, OOS R², Mincer-Zarnowitz, QLIKE |
 | `fin.plotting` | shared matplotlib style (`use_style()`, fixed `SERIES` colors) |
+| `fin.strategy` | `Strategy` base class; discovers strategies from `strategies/*.py` |
+| `fin.backtest` | daily long-only engine (costs, contributions, cash interest), metrics, walk-forward, YAML runner |
+| `fin.tracking` | run store: every backtest saved under `runs/` with config, metrics and git commit |
 
 Convention for every signal/forecast: the value at date `t` uses data up to `t` only and is a
 forecast for after `t`. `fin.stats.next_period` builds matching targets.
+
+## Strategies and backtests
+
+A strategy is one small class in `strategies/`:
+
+```python
+class SmaTrend(Strategy):
+    name = "sma_trend"          # used in configs
+    rebalance = "M"             # decide on the last trading day of each month
+
+    def __init__(self, ticker: str, months: int = 10):
+        self.ticker, self.months, self.universe = ticker, months, [ticker]
+
+    def target_weights(self, data):        # data = MarketData up to today only
+        price = data.adj_close[self.ticker].dropna()
+        if len(price) < 21 * self.months:
+            return None                    # not enough history: keep the portfolio
+        up = price.iloc[-1] > price.iloc[-21 * self.months:].mean()
+        return pd.Series({self.ticker: 1.0 if up else 0.0})   # rest stays in cash
+```
+
+Experiments are YAML files in `configs/`: one period, cash-flow schedule, cost model and cash
+rate shared by every strategy listed, so the results are comparable.
+
+```sh
+uv run fin backtest configs/world_cto.yaml   # run, print comparison, save runs
+uv run fin runs                              # list saved runs
+```
+
+Engine rules: decisions use data up to the close of day `t` and execute at the next open;
+prices are total-return adjusted; long-only, no leverage (weights >= 0, sum <= 1); returns are
+time-weighted, and `irr` gives the money-weighted return of the actual cash flows.
 
 ## Research notebooks
 
