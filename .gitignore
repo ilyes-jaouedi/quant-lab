@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Local data and experiment outputs (reproducible from code + configs)
+data/
+runs/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
