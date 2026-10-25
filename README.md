@@ -15,6 +15,32 @@ runs/         saved experiment results (git-ignored)
 
 Code that gets reused in `research/` graduates into `src/fin/` with a test.
 
+## Library modules
+
+| Module | Contents |
+|---|---|
+| `fin.data` | providers, Parquet cache, `MarketData` |
+| `fin.signals` | volatility forecasters: rolling, EWMA, out-of-sample GARCH(1,1) |
+| `fin.stats` | ACF, Ljung-Box, Lo-MacKinlay variance ratio, OOS R², Mincer-Zarnowitz, QLIKE |
+| `fin.plotting` | shared matplotlib style (`use_style()`, fixed `SERIES` colors) |
+
+Convention for every signal/forecast: the value at date `t` uses data up to `t` only and is a
+forecast for after `t`. `fin.stats.next_period` builds matching targets.
+
+## Research notebooks
+
+Notebooks are paired with a `.py` file via jupytext: edit either one in Jupyter and both stay
+in sync, and the `.py` keeps git diffs readable.
+
+```sh
+uv run jupyter lab                    # open research/*.ipynb
+uv run jupytext --sync research/*.py  # after editing the .py outside Jupyter
+```
+
+| Notebook | Finding |
+|---|---|
+| `001_returns_vs_volatility_predictability` | returns ≈ unpredictable (OOS R² < 0); volatility predictable (GARCH explains ~20–25% of next-month variance) |
+
 ## Setup
 
 ```sh
