@@ -93,6 +93,17 @@ def runs(limit: int = 20):
 
 
 @app.command()
+def serve(
+    port: int = 8000,
+    reload: Annotated[bool, typer.Option(help="Restart on code changes")] = False,
+):
+    """Start the API and dashboard on http://localhost:PORT."""
+    import uvicorn
+
+    uvicorn.run("fin.api.app:create_app", factory=True, port=port, reload=reload)
+
+
+@app.command()
 def cache():
     """List cached series."""
     entries = BarCache(DATA_DIR).entries()

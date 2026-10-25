@@ -38,8 +38,21 @@ def _jsonable(x):
     return str(x)
 
 
-def save_run(result, spec: dict | None = None, root: Path | None = None) -> str:
-    """Persist a BacktestResult; returns the run id."""
+def clean_json(x):
+    """Replace NaN/inf by None, recursively, so the value is strict JSON."""
+    if isinstance(x, dict):
+        return {k: clean_json(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [clean_json(v) for v in x]
+    if isinstance(x, (float, np.floating)):
+        return float(x) if np.isfinite(x) else None
+    return x
+
+
+def save_run(
+    result, spec: dict | None = None, root: Path | None = None, extra: dict | None = None
+) -> str:
+    """Persist a BacktestResult; returns the run id. ``extra`` is merged into meta.json."""
     root = Path(root or RUNS_DIR)
     slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", result.label).strip("-")
     run_id = f"{datetime.now():%Y%m%d-%H%M%S}_{slug}"
@@ -77,7 +90,8 @@ def save_run(result, spec: dict | None = None, root: Path | None = None) -> str:
         "spec": spec or {},
         "metrics": result.metrics(),
         "git": git_info(),
-    }
+    } | (extra or {})
+    meta = clean_json(meta)
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2, default=_jsonable))
     return run_dir.name
 

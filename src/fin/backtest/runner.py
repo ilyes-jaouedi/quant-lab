@@ -4,6 +4,7 @@ Every strategy in a config shares the same period, cash flows, costs and cash ra
 results are directly comparable.
 """
 
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -15,7 +16,11 @@ from fin.strategy import create
 
 
 def load_config(path: Path | str) -> dict:
-    return yaml.safe_load(Path(path).read_text())
+    """Parse an experiment YAML; ``name`` defaults to the file name."""
+    path = Path(path)
+    cfg = yaml.safe_load(path.read_text())
+    cfg.setdefault("name", path.stem)
+    return cfg
 
 
 def resolve_cash_rate(spec) -> float | pd.Series:
@@ -42,8 +47,13 @@ def backtest_config(cfg: dict) -> BacktestConfig:
     )
 
 
-def run_config(cfg: dict, save: bool = True) -> list[tuple[BacktestResult, str | None]]:
-    """Backtest every strategy in ``cfg``; returns (result, run id or None) pairs."""
+def run_config(
+    cfg: dict, save: bool = True, root: Path | None = None
+) -> list[tuple[BacktestResult, str | None]]:
+    """Backtest every strategy in ``cfg``; returns (result, run id or None) pairs.
+
+    The first strategy is the benchmark unless the config names one with ``benchmark:``.
+    """
     from fin.tracking import save_run
 
     strategies = []
@@ -57,9 +67,24 @@ def run_config(cfg: dict, save: bool = True) -> list[tuple[BacktestResult, str |
     data = load_market_data(tickers)  # full history: strategies may need warm-up data
     bt_cfg = backtest_config(cfg)
 
+    # Runs from one invocation form a batch: same data, period and settings, so comparable.
+    batch = f"{datetime.now():%Y%m%d-%H%M%S}_{cfg.get('name', 'experiment')}"
+    benchmark = cfg.get("benchmark", strategies[0][0])
     out = []
-    for label, strategy, spec in strategies:
+    for order, (label, strategy, spec) in enumerate(strategies):
         result = run_backtest(strategy, data, bt_cfg, label=label)
-        run_id = save_run(result, spec={"config": cfg, "strategy": spec}) if save else None
+        run_id = None
+        if save:
+            run_id = save_run(
+                result,
+                spec={"config": cfg, "strategy": spec},
+                root=root,
+                extra={
+                    "batch": batch,
+                    "experiment": cfg.get("name"),
+                    "order": order,
+                    "benchmark": benchmark,
+                },
+            )
         out.append((result, run_id))
     return out

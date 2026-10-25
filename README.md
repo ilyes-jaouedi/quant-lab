@@ -8,6 +8,7 @@ src/fin/      infrastructure library (data, signals, stats, backtest, execution,
 strategies/   one file per strategy (the only thing that changes between ideas)
 research/     notebooks, numbered: 001_topic.ipynb — messy is fine
 configs/      experiment configs
+ui/           web dashboard (React + shadcn/ui), talks to the API in fin.api
 tests/        tests for the infrastructure
 data/         local market-data cache (git-ignored)
 runs/         saved experiment results (git-ignored)
@@ -26,6 +27,7 @@ Code that gets reused in `research/` graduates into `src/fin/` with a test.
 | `fin.strategy` | `Strategy` base class; discovers strategies from `strategies/*.py` |
 | `fin.backtest` | daily long-only engine (costs, contributions, cash interest), metrics, walk-forward, YAML runner |
 | `fin.tracking` | run store: every backtest saved under `runs/` with config, metrics and git commit |
+| `fin.api` | FastAPI: experiments (list, run), batches of runs, trades, cached market data |
 
 Convention for every signal/forecast: the value at date `t` uses data up to `t` only and is a
 forecast for after `t`. `fin.stats.next_period` builds matching targets.
@@ -61,6 +63,23 @@ uv run fin runs                              # list saved runs
 Engine rules: decisions use data up to the close of day `t` and execute at the next open;
 prices are total-return adjusted; long-only, no leverage (weights >= 0, sum <= 1); returns are
 time-weighted, and `irr` gives the money-weighted return of the actual cash flows.
+
+## Dashboard
+
+```sh
+cd ui && npm install && npm run build && cd ..   # once, and after UI changes
+uv run fin serve                                 # API + dashboard on http://localhost:8000
+```
+
+- **Experiments**: run any config in `configs/` and browse past results.
+- **Experiment page**: one sentence per strategy against the benchmark (the first strategy in the
+  config, or `benchmark:`), growth and drawdown charts with 1Y-All windows, the full metrics
+  table, and each strategy's exposure and orders.
+- **Market data**: download Yahoo tickers into the cache and plot them.
+
+UI development with hot reload: `uv run fin serve` in one terminal, `cd ui && npm run dev` in
+another (Vite proxies `/api` to port 8000). Stack: Vite, React, TypeScript, Tailwind, shadcn/ui
+(Chalk Slate theme from 21st.dev, Instrument Sans), TradingView lightweight-charts.
 
 ## Research notebooks
 

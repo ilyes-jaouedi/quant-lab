@@ -18,3 +18,8 @@ runs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Dashboard
+ui/node_modules/
+ui/dist/
+.playwright-mcp/
