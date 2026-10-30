@@ -6,6 +6,7 @@ start: 1990-01-01
 initial_capital: 10000
 costs: {bps: 5, fixed: 1.0}  # Trade Republic-like
 cash_rate: ^IRX
+currency: USD  # a US-investor study: no EUR conversion
 
 strategies:
   - label: buy_and_hold

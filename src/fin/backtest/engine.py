@@ -57,6 +57,7 @@ class BacktestResult:
     weights: pd.DataFrame  # end-of-day holdings as fractions of nav
     trades: pd.DataFrame
     cash_rate: pd.Series  # daily rate actually applied, for excess-return metrics
+    vs_benchmark: dict | None = None  # significance tests, filled in by the experiment runner
 
     def metrics(self) -> dict:
         from fin.backtest.metrics import result_metrics
@@ -65,9 +66,11 @@ class BacktestResult:
 
 
 def period_dates(index: pd.DatetimeIndex, freq: str, which: Literal["first", "last"]):
-    """First or last trading day in ``index`` of each calendar period."""
+    """First or last trading day in ``index`` of each calendar period (none for "never")."""
     if freq == "D":
         return index
+    if freq == "never":
+        return pd.DatetimeIndex([])
     groups = index.to_series().groupby(index.to_period(freq))
     return pd.DatetimeIndex(groups.min() if which == "first" else groups.max())
 
@@ -119,7 +122,9 @@ def run_backtest(
         if i > 0:
             cash *= 1 + rate[i - 1]
         if pending is not None:
-            cash = _rebalance(d, pending, shares, cash, exec_np[i], config, tickers, trades)
+            cash = _rebalance(
+                d, pending, shares, cash, exec_np[i], config, tickers, trades, strategy.sells
+            )
             pending = None
 
         held = np.where(shares != 0, shares * close_np[i], 0.0)
@@ -174,12 +179,17 @@ def _validate(target: pd.Series, tickers: list[str]) -> np.ndarray:
     return w.clip(lower=0).to_numpy()
 
 
-def _rebalance(d, w, shares, cash, px, config, tickers, trades) -> float:
-    """Trade toward weights ``w`` at prices ``px``. Mutates ``shares``; returns new cash."""
+def _rebalance(d, w, shares, cash, px, config, tickers, trades, sells=True) -> float:
+    """Trade toward weights ``w`` at prices ``px``. Mutates ``shares``; returns new cash.
+
+    With ``sells=False`` only the buys are kept: new cash goes to the underweight assets.
+    """
     tradable = ~np.isnan(px)
     value = np.where(tradable & (shares != 0), shares * np.nan_to_num(px), 0.0)
     nav = cash + value.sum()
     delta = np.where(tradable, w * nav - value, 0.0)
+    if not sells:
+        delta = np.maximum(delta, 0.0)
     delta[np.abs(delta) < max(config.min_trade, 1e-9 * max(nav, 1.0))] = 0.0
     costs = config.costs
 

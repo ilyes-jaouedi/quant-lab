@@ -25,7 +25,7 @@ def use_style() -> None:
             "axes.labelcolor": TEXT_SECONDARY,
             "axes.titlecolor": TEXT,
             "axes.titlesize": 11,
-            "axes.titleweight": "semibold",
+            "axes.titleweight": "bold",
             "axes.titlelocation": "left",
             "axes.spines.top": False,
             "axes.spines.right": False,

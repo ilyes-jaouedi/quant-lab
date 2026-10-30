@@ -19,7 +19,12 @@ class Strategy(ABC):
 
     name: ClassVar[str]
     universe: list[str]
-    rebalance: str = "M"  # "D", "W", "M", "Q" or "Y": decide on the last trading day of each period
+    # "D", "W", "M", "Q" or "Y": decide on the last trading day of each period. "never": decide
+    # only on the first day and when new cash arrives.
+    rebalance: str = "M"
+    # False: only buy toward the targets with available cash, never sell. Weights then drift
+    # with prices, as in a real buy-and-hold portfolio.
+    sells: bool = True
 
     @abstractmethod
     def target_weights(self, data: MarketData) -> pd.Series | None:

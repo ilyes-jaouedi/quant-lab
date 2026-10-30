@@ -36,6 +36,12 @@ export function prettyLabel(label: string): string {
     vol_target: "Vol targeting",
     sma_10m: "SMA 10-month",
     l1_trend: "L1 trend",
+    equal_weight: "Equal weight",
+    risk_parity: "Risk parity",
+    tsmom_12m: "Momentum 12m",
+    tsmom_12m_rp: "Momentum 12m, risk parity",
+    sma_10m_rp: "SMA 10m, risk parity",
+    ema_10m_rp: "EMA 10m, risk parity",
   }
   if (known[label]) return known[label]
   const s = label.replace(/[_-]+/g, " ")
@@ -46,6 +52,7 @@ export function prettyExperiment(name: string): string {
   const known: Record<string, string> = {
     world_cto: "MSCI World, CTO hobby account",
     sp500_timing: "S&P 500 timing since 1990",
+    multi_asset_trend: "Trend across 8 asset classes",
   }
   return known[name] ?? prettyLabel(name)
 }

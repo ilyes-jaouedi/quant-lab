@@ -77,6 +77,7 @@ def create_app(
                     "strategy": m["strategy"]["name"],
                     "params": m["strategy"]["params"],
                     "metrics": m["metrics"],
+                    "vs_benchmark": m.get("vs_benchmark"),
                 }
                 for m in runs
             ],

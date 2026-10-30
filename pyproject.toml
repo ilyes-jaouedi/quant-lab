@@ -52,6 +52,12 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# Notebooks are linted through their jupytext .py pair.
+extend-exclude = ["*.ipynb"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Notebooks: a bare expression at the end of a cell is how results are displayed.
+"research/*.py" = ["B018", "E501"]

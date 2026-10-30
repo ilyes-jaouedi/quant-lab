@@ -9,6 +9,7 @@ start: 2011-01-01
 initial_capital: 1000
 costs: {bps: 5, fixed: 1.0}
 cash_rate: 0.02
+currency: EUR  # all prices converted to EUR (default)
 
 strategies:
   - label: buy_and_hold

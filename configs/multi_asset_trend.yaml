@@ -1,0 +1,33 @@
+# Trend following across asset classes (research/003): US, developed and emerging equities,
+# long and medium Treasuries, gold, commodities and real estate, converted to EUR.
+# US-listed ETFs are used for their long history; EU retail investors would hold the UCITS
+# equivalents. Benchmark: the same 8 assets, equal weight, rebalanced monthly.
+# Every variant run here counts as a trial for the deflated Sharpe ratio.
+start: 2007-03-01
+initial_capital: 10000
+costs: {bps: 5, fixed: 1.0}
+cash_rate: 0.015
+min_trade: 100  # skip orders under 100 EUR: with 1 EUR fees, tiny rebalances cost more than they fix
+currency: EUR
+
+x-assets: &assets [SPY, EFA, EEM, TLT, IEF, GLD, DBC, VNQ]
+
+strategies:
+  - label: equal_weight
+    strategy: trend_following
+    params: {tickers: *assets, weighting: equal, always_invested: true}
+  - label: risk_parity
+    strategy: trend_following
+    params: {tickers: *assets, weighting: inverse_vol, always_invested: true}
+  - label: tsmom_12m
+    strategy: trend_following
+    params: {tickers: *assets, lookback_months: 12, signal: momentum, weighting: equal}
+  - label: tsmom_12m_rp
+    strategy: trend_following
+    params: {tickers: *assets, lookback_months: 12, signal: momentum, weighting: inverse_vol}
+  - label: sma_10m_rp
+    strategy: trend_following
+    params: {tickers: *assets, lookback_months: 10, signal: sma, weighting: inverse_vol}
+  - label: ema_10m_rp
+    strategy: trend_following
+    params: {tickers: *assets, lookback_months: 10, signal: ema, weighting: inverse_vol}

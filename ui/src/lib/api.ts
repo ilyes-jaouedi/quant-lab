@@ -25,12 +25,27 @@ export interface Experiment {
   strategies: string[]
 }
 
+/** Paired stationary-bootstrap tests against the benchmark (absent for the benchmark itself). */
+export interface VsBenchmark {
+  psr: number | null
+  dsr: number | null
+  n_trials: number
+  n?: number
+  return_diff?: number
+  return_diff_ci?: [number, number]
+  return_diff_p?: number
+  sharpe_diff?: number
+  sharpe_diff_ci?: [number, number]
+  sharpe_diff_p?: number
+}
+
 export interface RunSummary {
   id: string
   label: string
   strategy: string
   params: Record<string, unknown>
   metrics: Metrics
+  vs_benchmark?: VsBenchmark | null
 }
 
 export interface RunSeries {

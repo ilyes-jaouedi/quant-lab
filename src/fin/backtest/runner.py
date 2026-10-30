@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
+from fin.backtest.compare import versus_benchmark
 from fin.backtest.engine import BacktestConfig, BacktestResult, Costs, run_backtest
 from fin.data import load_bars, load_market_data
 from fin.strategy import create
@@ -64,15 +65,21 @@ def run_config(
         strategies.append((spec.get("label", spec["strategy"]), strategy, spec))
 
     tickers = sorted({t for _, s, _ in strategies for t in s.universe})
-    data = load_market_data(tickers)  # full history: strategies may need warm-up data
+    # Full history (strategies may need warm-up data), converted to the investor's currency.
+    data = load_market_data(tickers, currency=cfg.get("currency", "EUR"))
     bt_cfg = backtest_config(cfg)
 
     # Runs from one invocation form a batch: same data, period and settings, so comparable.
     batch = f"{datetime.now():%Y%m%d-%H%M%S}_{cfg.get('name', 'experiment')}"
     benchmark = cfg.get("benchmark", strategies[0][0])
+    results = {label: run_backtest(s, data, bt_cfg, label=label) for label, s, _ in strategies}
+    if benchmark not in results:
+        raise ValueError(f"benchmark {benchmark!r} is not one of the strategy labels")
+    tests = versus_benchmark(results, benchmark)
+
     out = []
-    for order, (label, strategy, spec) in enumerate(strategies):
-        result = run_backtest(strategy, data, bt_cfg, label=label)
+    for order, (label, _, spec) in enumerate(strategies):
+        result = results[label]
         run_id = None
         if save:
             run_id = save_run(
@@ -84,7 +91,9 @@ def run_config(
                     "experiment": cfg.get("name"),
                     "order": order,
                     "benchmark": benchmark,
+                    "vs_benchmark": tests[label],
                 },
             )
+        result.vs_benchmark = tests[label]
         out.append((result, run_id))
     return out

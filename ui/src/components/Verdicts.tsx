@@ -1,9 +1,34 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react"
 
-import type { RunSummary } from "@/lib/api"
+import type { RunSummary, VsBenchmark } from "@/lib/api"
 import { fmt, prettyLabel } from "@/lib/format"
 
 type Outcome = "beat" | "smoother" | "lost"
+
+const SIGNIFICANT = 0.05
+
+/** Plain-language reading of the paired bootstrap tests. */
+function luckSentence(v: VsBenchmark): string {
+  const part = (label: string, diff: number, p: number, value: string) => {
+    if (diff <= 0) return `${label} ${value}: no edge to test.`
+    return p < SIGNIFICANT
+      ? `${label} ${value} is unlikely to be luck (p = ${p.toFixed(2)}).`
+      : `${label} ${value} could easily be luck (p = ${p.toFixed(2)}).`
+  }
+  const ret = part(
+    "Growth",
+    v.return_diff ?? 0,
+    v.return_diff_p ?? 1,
+    `${fmt.signedPct(v.return_diff, 1)} a year`,
+  )
+  const sharpe = part(
+    "Sharpe",
+    v.sharpe_diff ?? 0,
+    v.sharpe_diff_p ?? 1,
+    `${(v.sharpe_diff ?? 0) >= 0 ? "+" : "−"}${Math.abs(v.sharpe_diff ?? 0).toFixed(2)}`,
+  )
+  return `${ret} ${sharpe}`
+}
 
 function outcome(run: RunSummary, bench: RunSummary): Outcome {
   const m = run.metrics
@@ -67,6 +92,12 @@ export function Verdicts({ runs, benchmark, colors }: Props) {
               {fmt.num(m.sharpe)} vs {fmt.num(b.sharpe)}. Fees {fmt.euro(m.costs)} over{" "}
               {fmt.int(m.n_trades)} orders. Invested {fmt.pct(m.avg_exposure, 0)} of the time.
             </p>
+            {run.vs_benchmark?.return_diff_p != null && (
+              <p className="text-sm md:col-span-2">
+                <span className="font-medium">Could it be luck? </span>
+                <span className="text-muted-foreground">{luckSentence(run.vs_benchmark)}</span>
+              </p>
+            )}
           </li>
         )
       })}

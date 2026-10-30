@@ -47,6 +47,13 @@ METRIC_FORMATS = {
     "turnover": "{:.2f}",
     "costs": "{:,.0f}",
     "n_trades": "{:.0f}",
+    # Versus the benchmark (paired stationary bootstrap) and Sharpe-ratio probabilities.
+    "return_diff": "{:+.2%}",
+    "return_diff_p": "{:.3f}",
+    "sharpe_diff": "{:+.2f}",
+    "sharpe_diff_p": "{:.3f}",
+    "psr": "{:.2f}",
+    "dsr": "{:.2f}",
 }
 
 
@@ -74,7 +81,12 @@ def backtest(
     results = run_config(load_config(config), save=save)
     first = results[0][0].nav.index
     typer.echo(f"{first[0].date()} -> {first[-1].date()}\n")
-    typer.echo(_metrics_table({r.label: r.metrics() for r, _ in results}))
+    typer.echo(_metrics_table({r.label: r.metrics() | (r.vs_benchmark or {}) for r, _ in results}))
+    typer.echo(
+        "\nreturn_diff, sharpe_diff: vs the benchmark; _p: one-sided bootstrap p-value "
+        "(small = unlikely to be luck).\npsr: P(Sharpe > 0); dsr: same, deflated for the "
+        "number of strategies tried."
+    )
     if save:
         typer.echo("\nsaved: " + ", ".join(run_id for _, run_id in results))
 

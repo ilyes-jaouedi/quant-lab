@@ -20,9 +20,9 @@ Code that gets reused in `research/` graduates into `src/fin/` with a test.
 
 | Module | Contents |
 |---|---|
-| `fin.data` | providers, Parquet cache, `MarketData` |
-| `fin.signals` | volatility forecasters (rolling, EWMA, out-of-sample GARCH(1,1)); L1 trend filter (banded primal-dual interior point) |
-| `fin.stats` | ACF, Ljung-Box, Lo-MacKinlay variance ratio, OOS R², Mincer-Zarnowitz, QLIKE |
+| `fin.data` | providers, Parquet cache, `MarketData`, currency conversion (`currency="EUR"`) |
+| `fin.signals` | volatility forecasters (rolling, EWMA, out-of-sample GARCH(1,1)); L1 trend filter (banded primal-dual interior point); trend rules as kernels on returns, with lag, noise gain and frequency response (`fin.signals.trend`) |
+| `fin.stats` | ACF, Ljung-Box, Lo-MacKinlay variance ratio, OOS R², Mincer-Zarnowitz, QLIKE; significance: stationary bootstrap, paired tests vs a benchmark, probabilistic and deflated Sharpe ratios |
 | `fin.plotting` | shared matplotlib style (`use_style()`, fixed `SERIES` colors) |
 | `fin.strategy` | `Strategy` base class; discovers strategies from `strategies/*.py` |
 | `fin.backtest` | daily long-only engine (costs, contributions, cash interest), metrics, walk-forward, YAML runner |
@@ -60,6 +60,14 @@ uv run fin backtest configs/world_cto.yaml   # run, print comparison, save runs
 uv run fin runs                              # list saved runs
 ```
 
+Every experiment tests each strategy against its benchmark (the first strategy, or
+`benchmark:`) with a paired stationary bootstrap, and reports the probabilistic and deflated
+Sharpe ratios: `return_diff_p` and `sharpe_diff_p` near 0 mean the edge is unlikely to be luck.
+
+`buy_and_hold` never sells (weights drift, new cash buys what is underweight); `constant_mix`
+rebalances to fixed weights. Configs convert all prices to `currency:` (default EUR) with
+daily FX rates.
+
 Engine rules: decisions use data up to the close of day `t` and execute at the next open;
 prices are total-return adjusted; long-only, no leverage (weights >= 0, sum <= 1); returns are
 time-weighted, and `irr` gives the money-weighted return of the actual cash flows.
@@ -94,6 +102,8 @@ uv run jupytext --sync research/*.py  # after editing the .py outside Jupyter
 | Notebook | Finding |
 |---|---|
 | `001_returns_vs_volatility_predictability` | returns ≈ unpredictable (OOS R² < 0); volatility predictable (GARCH explains ~20–25% of next-month variance) |
+| `002_luck_and_multiple_testing` | the best of 500 random strategies "passes" a naive test (p = 0.04), exactly as extreme value theory predicts; SMA lookback ranks in-sample don't predict out-of-sample (ρ = −0.08) |
+| `003_trend_as_filter_design` | trend rules are kernels on past returns; the SMA vs momentum gap was a lag mismatch; 11/12 trend variants beat on Sharpe and halve drawdowns, none significant alone; payoff convex (t = 3.5) |
 
 ## Setup
 
