@@ -22,7 +22,7 @@ Code that gets reused in `research/` graduates into `src/fin/` with a test.
 |---|---|
 | `fin.data` | providers, Parquet cache, `MarketData`, currency conversion (`currency="EUR"`) |
 | `fin.signals` | volatility forecasters (rolling, EWMA, out-of-sample GARCH(1,1)); L1 trend filter (banded primal-dual interior point); trend rules as kernels on returns, with lag, noise gain and frequency response (`fin.signals.trend`) |
-| `fin.stats` | ACF, Ljung-Box, Lo-MacKinlay variance ratio, OOS R², Mincer-Zarnowitz, QLIKE; significance: stationary bootstrap, paired tests vs a benchmark, probabilistic and deflated Sharpe ratios |
+| `fin.stats` | ACF, Ljung-Box, Lo-MacKinlay variance ratio, OOS R², Mincer-Zarnowitz, QLIKE; significance: stationary bootstrap, paired tests vs a benchmark, probabilistic and deflated Sharpe ratios; growth-optimal betting: Kelly fraction and its standard error, growth rate with volatility drag, leveraged returns, rebalancing bonus (`fin.stats.kelly`) |
 | `fin.plotting` | shared matplotlib style (`use_style()`, fixed `SERIES` colors) |
 | `fin.strategy` | `Strategy` base class; discovers strategies from `strategies/*.py` |
 | `fin.backtest` | daily long-only engine (costs, contributions, cash interest), metrics, walk-forward, YAML runner |
@@ -104,6 +104,7 @@ uv run jupytext --sync research/*.py  # after editing the .py outside Jupyter
 | `001_returns_vs_volatility_predictability` | returns ≈ unpredictable (OOS R² < 0); volatility predictable (GARCH explains ~20–25% of next-month variance) |
 | `002_luck_and_multiple_testing` | the best of 500 random strategies "passes" a naive test (p = 0.04), exactly as extreme value theory predicts; SMA lookback ranks in-sample don't predict out-of-sample (ρ = −0.08) |
 | `003_trend_as_filter_design` | trend rules are kernels on past returns; the SMA vs momentum gap was a lag mismatch; 11/12 trend variants beat on Sharpe and halve drawdowns, none significant alone; payoff convex (t = 3.5) |
+| `004_kelly_and_volatility_drag` | growth follows g(f) = r + f(μ−r) − f²σ²/2 on the S&P 500 (Kelly f* ≈ 2.4, −96% drawdown); f* is too noisy to estimate (se ≈ 1.8 over 10 years): estimated Kelly loses to holding the index, −11%/yr vs +6%/yr since 2000; rebalancing adds 1.4%/yr over the average asset |
 
 ## Setup
 
